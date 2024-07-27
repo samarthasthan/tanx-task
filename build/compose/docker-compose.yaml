@@ -1,0 +1,45 @@
+services:
+
+  # Databases
+  mysql:
+    image: mysql:latest
+    container_name: mysql
+    networks:
+      - tanx
+    ports:
+      - "${MYSQL_PORT}:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=tanx
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    networks:
+      - tanx
+    ports:
+      - "${REDIS_PORT}:6379"
+  
+
+  # Kafka
+  kafka:
+    build:
+      context: ../docker/kafka
+      dockerfile: ./Dockerfile
+    container_name: kafka
+    ports:
+      - ${KAFKA_EXTERNAL_PORT}:9092
+    networks:
+      - tanx
+    healthcheck:
+      test:
+        ["CMD-SHELL", "./wait-for.sh kafka:${KAFKA_PORT} -- ./kafka_setup.sh"]
+      interval: 10s
+      timeout: 10s
+      retries: 100
+      start_period: 10s
+
+
+networks:
+  tanx:
+    driver: bridge
