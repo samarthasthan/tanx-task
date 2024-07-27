@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/samarthasthan/tanx-task/internal/database"
+	"github.com/samarthasthan/tanx-task/internal/rabbitmq"
 )
 
 var (
@@ -15,9 +16,10 @@ func init() {
 }
 
 type Controller struct {
-	mysql database.Database
+	mysql    database.Database
+	rabbitmq *rabbitmq.RabbitMQ
 }
 
-func NewController(db database.Database) *Controller {
-	return &Controller{mysql: db}
+func NewController(rb *rabbitmq.RabbitMQ, db database.Database) *Controller {
+	return &Controller{rabbitmq: rb, mysql: db}
 }
