@@ -18,6 +18,7 @@ type (
 	}
 )
 
+// Validate validates the input
 func (cv *CustomValidator) Validate(i interface{}) error {
 	if err := cv.validator.Struct(i); err != nil {
 		// Optionally, you could return the error to give each route more control over the status code
@@ -26,20 +27,24 @@ func (cv *CustomValidator) Validate(i interface{}) error {
 	return nil
 }
 
+// NewHandler creates a new handler
 func NewHandler(c *controller.Controller) *Handlers {
 	return &Handlers{Echo: echo.New(), controller: c}
 }
 
+// RegisterValidator registers the custom validator
 func (h *Handlers) RegisterValidator() {
 	h.Validator = &CustomValidator{validator: validator.New()}
 }
 
+// Handle handles the routes
 func (h *Handlers) Handle() {
 	// Handle the authentication routes
 	h.RegisterValidator()
 	h.HandleAuth()
 }
 
+// HandleAuth handles the auth routes
 func (h *Handlers) HandleAuth() {
 	auth := h.Group("/auth")
 	auth.POST("/signup", h.handleSignUp)
@@ -49,4 +54,13 @@ func (h *Handlers) HandleAuth() {
 	authRes := h.Group("/auth")
 	authRes.Use(h.validateToken)
 	authRes.POST("/verify", h.handleVerify)
+}
+
+// HandleAlert handles the alert routes
+func (h *Handlers) HandleAlert() {
+	alert := h.Group("/alert")
+	alert.Use(h.validateToken) // Validate the token
+	alert.POST("/create", h.handleAlertCreate)
+	alert.POST("/delete", h.handleAlertDelete)
+	alert.GET("/all", h.handleAlertAll)
 }
