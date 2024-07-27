@@ -33,11 +33,9 @@ type Reset struct {
 
 type User struct {
 	Userid     string
-	Firstname  string
-	Lastname   string
+	Name       string
 	Email      string
 	Isverified sql.NullBool
-	Phoneno    string
 	Password   string
 	Blocked    sql.NullBool
 	Createdat  time.Time

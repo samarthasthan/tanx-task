@@ -11,26 +11,22 @@ import (
 )
 
 const createAccount = `-- name: CreateAccount :exec
-INSERT INTO Users (UserID, FirstName, LastName, Email, PhoneNo, Password)
-VALUES (?,?,?,?,?,?)
+INSERT INTO Users (UserID, Name, Email, Password)
+VALUES (?,?,?,?)
 `
 
 type CreateAccountParams struct {
-	Userid    string
-	Firstname string
-	Lastname  string
-	Email     string
-	Phoneno   string
-	Password  string
+	Userid   string
+	Name     string
+	Email    string
+	Password string
 }
 
 func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) error {
 	_, err := q.db.ExecContext(ctx, createAccount,
 		arg.Userid,
-		arg.Firstname,
-		arg.Lastname,
+		arg.Name,
 		arg.Email,
-		arg.Phoneno,
 		arg.Password,
 	)
 	return err

@@ -21,23 +21,23 @@ services:
       - "${REDIS_PORT}:6379"
   
 
-  # Kafka
-  kafka:
-    build:
-      context: ../docker/kafka
-      dockerfile: ./Dockerfile
-    container_name: kafka
+  # Message Brokers
+  rabbitmq:
+    image: rabbitmq:latest
+    container_name: rabbitmq
+    environment:
+       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
     ports:
-      - ${KAFKA_EXTERNAL_PORT}:9092
+      - ${RABBITMQ_DEFAULT_PORT}:5672
     networks:
       - tanx
     healthcheck:
-      test:
-        ["CMD-SHELL", "./wait-for.sh kafka:${KAFKA_PORT} -- ./kafka_setup.sh"]
-      interval: 10s
-      timeout: 10s
-      retries: 100
-      start_period: 10s
+      test: rabbitmq-diagnostics -q ping
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+
 
 
 networks:

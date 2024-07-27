@@ -1,6 +1,6 @@
 -- name: CreateAccount :exec
-INSERT INTO Users (UserID, FirstName, LastName, Email, PhoneNo, Password)
-VALUES (?,?,?,?,?,?);
+INSERT INTO Users (UserID, Name, Email, Password)
+VALUES (?,?,?,?);
 
 
 -- name: CreateVerification :exec
