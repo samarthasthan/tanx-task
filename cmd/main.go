@@ -1,11 +1,14 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"time"
 
 	"github.com/samarthasthan/tanx-task/internal/database"
+	"github.com/samarthasthan/tanx-task/internal/mail"
+	"github.com/samarthasthan/tanx-task/internal/models"
 	"github.com/samarthasthan/tanx-task/internal/rabbitmq"
 	"github.com/samarthasthan/tanx-task/pkg/env"
 )
@@ -40,10 +43,10 @@ func init() {
 	RABBITMQ_DEFAULT_PASS = env.GetEnv("RABBITMQ_DEFAULT_PASS", "password")
 	RABBITMQ_DEFAULT_PORT = env.GetEnv("RABBITMQ_DEFAULT_PORT", "5672")
 	RABBITMQ_DEFAULT_HOST = env.GetEnv("RABBITMQ_DEFAULT_HOST", "localhost")
-	SMTP_SERVER = env.GetEnv("SMTP_SERVER", "smtp-relay.sendinblue.com")
+	SMTP_SERVER = env.GetEnv("SMTP_SERVER", "smtp-relay.brevo.com")
 	SMTP_PORT = env.GetEnv("SMTP_PORT", "587")
-	SMTP_LOGIN = env.GetEnv("SMTP_LOGIN", "use your own sender")
-	SMTP_PASSWORD = env.GetEnv("SMTP_PASSWORD", "use your own key")
+	SMTP_LOGIN = env.GetEnv("SMTP_LOGIN", "75a33c001@smtp-brevo.com")
+	SMTP_PASSWORD = env.GetEnv("SMTP_PASSWORD", "0c8shB9P4N3vXTyV")
 }
 
 func main() {
@@ -64,14 +67,24 @@ func main() {
 	}
 	defer publisher.Close()
 	go func() {
-		for {
-			// Publish a message to the RabbitMQ
-			err := publisher.Publish("tanx", "tanx", []byte("Hello World"))
-			if err != nil {
-				log.Println(err.Error())
-			}
-			time.Sleep(time.Second)
+		mail := models.Mail{
+			To:      "samarthasthan27@gmail.com",
+			Subject: "Hello",
+			Body:    "Hello World",
 		}
+		// struct to byte
+		data, err := json.Marshal(mail)
+		if err != nil {
+			log.Println(err.Error())
+		}
+
+		// Publish a message to the RabbitMQ
+		err = publisher.Publish("tanx", "tanx", data)
+		if err != nil {
+			log.Println(err.Error())
+		}
+		time.Sleep(time.Second)
+
 	}()
 
 	// Create a new RabbitMQ instance for the consumer
@@ -81,16 +94,9 @@ func main() {
 	}
 	defer consumer.Close()
 
-	for {
-		// Consume a message from the RabbitMQ
-		msgs, err := consumer.Consume("tanx", "tanx")
-		if err != nil {
-			log.Println(err.Error())
-		}
-		for d := range msgs {
-			log.Printf("Received a message: %s", d.Body)
-		}
-	}
+	// Mail handler
+	m := mail.NewMailHandler(consumer, SMTP_SERVER, SMTP_PORT, SMTP_LOGIN, SMTP_PASSWORD)
+	m.ConsumeMails()
 
 	// // Register controllers
 	// c := controller.NewController(publisher, mysql)
