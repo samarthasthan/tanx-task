@@ -21,3 +21,6 @@ DELETE FROM Verifications WHERE UserID = ?;
 
 -- name: GetPasswordByEmail :one
 SELECT Password FROM Users WHERE Email = ?;
+
+-- name: GetUserByEmail :one
+SELECT UserID, Name, Email, Password FROM Users WHERE Email = ?;

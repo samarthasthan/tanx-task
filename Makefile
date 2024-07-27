@@ -18,6 +18,7 @@ down:
 	@echo "Stopping the services"
 	@docker compose -f ./build/compose/docker-compose.yaml down --volumes
 
+
 # Unit tests
 unit-test:
 	@echo "Running unit tests..."

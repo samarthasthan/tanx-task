@@ -16,10 +16,11 @@ func init() {
 }
 
 type Controller struct {
-	mysql    database.Database
-	rabbitmq *rabbitmq.RabbitMQ
+	mysql      database.Database
+	rabbitmq   *rabbitmq.RabbitMQ
+	jwt_secret string
 }
 
-func NewController(rb *rabbitmq.RabbitMQ, db database.Database) *Controller {
-	return &Controller{rabbitmq: rb, mysql: db}
+func NewController(rb *rabbitmq.RabbitMQ, db database.Database, jwt string) *Controller {
+	return &Controller{rabbitmq: rb, mysql: db, jwt_secret: jwt}
 }

@@ -45,4 +45,8 @@ func (h *Handlers) HandleAuth() {
 	auth.POST("/signup", h.handleSignUp)
 	auth.POST("/otp-verification", h.handleOTPVerification)
 	auth.POST("/login", h.handleLogin)
+
+	authRes := h.Group("/auth")
+	authRes.Use(h.validateToken)
+	authRes.POST("/verify", h.handleVerify)
 }

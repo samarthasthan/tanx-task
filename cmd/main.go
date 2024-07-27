@@ -1,14 +1,13 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
-	"time"
 
+	"github.com/samarthasthan/tanx-task/api"
+	"github.com/samarthasthan/tanx-task/internal/controller"
 	"github.com/samarthasthan/tanx-task/internal/database"
 	"github.com/samarthasthan/tanx-task/internal/mail"
-	"github.com/samarthasthan/tanx-task/internal/models"
 	"github.com/samarthasthan/tanx-task/internal/rabbitmq"
 	"github.com/samarthasthan/tanx-task/pkg/env"
 )
@@ -29,6 +28,7 @@ var (
 	SMTP_PORT             string
 	SMTP_LOGIN            string
 	SMTP_PASSWORD         string
+	JWT_SECRET            string
 )
 
 // Initialize the environment variables
@@ -47,6 +47,7 @@ func init() {
 	SMTP_PORT = env.GetEnv("SMTP_PORT", "587")
 	SMTP_LOGIN = env.GetEnv("SMTP_LOGIN", "75a33c001@smtp-brevo.com")
 	SMTP_PASSWORD = env.GetEnv("SMTP_PASSWORD", "0c8shB9P4N3vXTyV")
+	JWT_SECRET = env.GetEnv("JWT_SECRET", "secret")
 }
 
 func main() {
@@ -66,26 +67,6 @@ func main() {
 		failOnError(err, "Failed to connect to RabbitMQ as publisher")
 	}
 	defer publisher.Close()
-	go func() {
-		mail := models.Mail{
-			To:      "samarthasthan27@gmail.com",
-			Subject: "Hello",
-			Body:    "Hello World",
-		}
-		// struct to byte
-		data, err := json.Marshal(mail)
-		if err != nil {
-			log.Println(err.Error())
-		}
-
-		// Publish a message to the RabbitMQ
-		err = publisher.Publish("tanx", "tanx", data)
-		if err != nil {
-			log.Println(err.Error())
-		}
-		time.Sleep(time.Second)
-
-	}()
 
 	// Create a new RabbitMQ instance for the consumer
 	consumer, err := rabbitmq.NewRabbitMQ(fmt.Sprintf("amqp://%s:%s@%s:%s/", RABBITMQ_DEFAULT_USER, RABBITMQ_DEFAULT_PASS, RABBITMQ_DEFAULT_HOST, RABBITMQ_DEFAULT_PORT))
@@ -96,15 +77,17 @@ func main() {
 
 	// Mail handler
 	m := mail.NewMailHandler(consumer, SMTP_SERVER, SMTP_PORT, SMTP_LOGIN, SMTP_PASSWORD)
-	m.ConsumeMails()
+	go func() {
+		m.ConsumeMails()
+	}()
 
-	// // Register controllers
-	// c := controller.NewController(publisher, mysql)
+	// Register controllers
+	c := controller.NewController(publisher, mysql, JWT_SECRET)
 
-	// // Register Echo handler
-	// h := api.NewHandler(c)
-	// h.Handle()
-	// h.Logger.Fatal(h.Start(":" + REST_API_PORT))
+	// Register Echo handler
+	h := api.NewHandler(c)
+	h.Handle()
+	h.Logger.Fatal(h.Start(":" + REST_API_PORT))
 }
 
 func failOnError(err error, msg string) {

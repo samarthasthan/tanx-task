@@ -34,9 +34,10 @@ services:
       - tanx
     healthcheck:
       test: rabbitmq-diagnostics -q ping
-      interval: 1m30s
-      timeout: 30s
-      retries: 5
+      interval: 10s
+      timeout: 10s
+      retries: 100
+      start_period: 10s
 
 
 
