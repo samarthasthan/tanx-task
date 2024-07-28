@@ -22,13 +22,21 @@ Welcome to the Price Alert Application project! This application allows users to
 - **Email Notifications**: Sends an email when the price alert is triggered.
 - **Caching**: Utilizes Redis for caching alert data.
 
+## High-Level Design
+
+![Sign Up OTP](/samples/Untitled-2024-07-20-2114.png)
+
+## Postman Documentation
+
+For detailed API documentation, you can view the Postman collection [here](https://documenter.getpostman.com/view/19782195/2sA3kaBeRD).
+
 ## Sample Screenshots
 
 Here are some screenshots:
 
-| Sign Up OTP                           | Trigger Email                               | Sign Up Postman                                                              |
-| ------------------------------------- | ------------------------------------------- | ---------------------------------------------------------------------------- |
-| ![Sign Up OTP](/samples/IMG_0740.PNG) | ![Trigger Email](/samples/IMG_0742%202.PNG) | ![Sign Up Postman](/samples/Screenshot%202024-07-28%20at%202.23.40%20PM.png) |
+| Sign Up OTP Email                     | Trigger Email                               |
+| ------------------------------------- | ------------------------------------------- |
+| ![Sign Up OTP](/samples/IMG_0740.PNG) | ![Trigger Email](/samples/IMG_0742%202.PNG) |
 
 ## Getting Started
 
