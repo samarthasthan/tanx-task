@@ -33,7 +33,7 @@ unit-test:
 # Make migrations
 migrate-up:
 	@echo "Making migrations..."
-	@migrate -path ./internal/database/mysql/migrations -database "mysql://root:password@tcp(localhost:3306)/tanx" -verbose up
+	@migrate -path ./internal/database/mysql/migrations -database "mysql://root:${MYSQL_ROOT_PASSWORD}@tcp(${MYSQL_HOST}:${MYSQL_PORT})/tanx" -verbose up
 	@echo "Migrations completed."
 
 # Delete migrations

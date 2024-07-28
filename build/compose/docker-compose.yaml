@@ -4,6 +4,7 @@ services:
   mysql:
     image: mysql:latest
     container_name: mysql
+    hostname: mysql
     networks:
       - tanx
     ports:
@@ -15,6 +16,7 @@ services:
   redis:
     image: redis:latest
     container_name: redis
+    hostname: redis
     networks:
       - tanx
     ports:
@@ -25,19 +27,92 @@ services:
   rabbitmq:
     image: rabbitmq:latest
     container_name: rabbitmq
+    hostname: rabbitmq
     environment:
        RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
        RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
     ports:
-      - ${RABBITMQ_DEFAULT_PORT}:5672
+      - "${RABBITMQ_DEFAULT_PORT}:5672"
     networks:
       - tanx
     healthcheck:
-      test: rabbitmq-diagnostics -q ping
-      interval: 10s
-      timeout: 10s
-      retries: 100
-      start_period: 10s
+        test: rabbitmq-diagnostics -q ping
+        interval: 30s
+        timeout: 10s
+        retries: 5
+
+  # Services
+  email:
+    build: 
+      context: ../../
+      dockerfile: ./build/docker/email/Dockerfile
+    container_name: email
+    hostname: email
+    networks:
+      - tanx
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+      - RABBITMQ_DEFAULT_PORT=${RABBITMQ_DEFAULT_PORT}
+      - RABBITMQ_DEFAULT_HOST=${RABBITMQ_DEFAULT_HOST}
+      - SMTP_SERVER=${SMTP_SERVER}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_LOGIN=${SMTP_LOGIN}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+    command: ["./app"]
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+  
+  tanx:
+    build: 
+      context: ../../
+      dockerfile: ./build/docker/tanx/Dockerfile
+    container_name: tanx
+    hostname: tanx
+    networks:
+      - tanx
+    environment:
+      - REST_API_PORT=${REST_API_PORT}
+      - MYSQL_PORT=${MYSQL_PORT}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_HOST=${MYSQL_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_HOST=${REDIS_HOST}
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+      - RABBITMQ_DEFAULT_PORT=${RABBITMQ_DEFAULT_PORT}
+      - RABBITMQ_DEFAULT_HOST=${RABBITMQ_DEFAULT_HOST}
+      - JWT_SECRET=${JWT_SECRET}
+    ports:
+      - "${REST_API_PORT}:${REST_API_PORT}"
+    command: ["sh", "-c", "make migrate-up && ./app"]
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+  
+  alert:
+    build: 
+      context: ../../
+      dockerfile: ./build/docker/alert/Dockerfile
+    container_name: alert
+    hostname: alert
+    networks:
+      - tanx
+    environment:
+      - MYSQL_PORT=${MYSQL_PORT}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_HOST=${MYSQL_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_HOST=${REDIS_HOST}
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+      - RABBITMQ_DEFAULT_PORT=${RABBITMQ_DEFAULT_PORT}
+      - RABBITMQ_DEFAULT_HOST=${RABBITMQ_DEFAULT_HOST}
+    command: ["./app"]
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
 
 networks:
   tanx:
