@@ -94,7 +94,10 @@ func (q *Queries) DeleteVerification(ctx context.Context, userid string) error {
 }
 
 const getAlerts = `-- name: GetAlerts :many
-SELECT AlertID, UserID, Curreny, Price, Status, CreatedAt, UpdatedAt FROM Alerts WHERE Status = 'created'
+SELECT a.AlertID, a.UserID, a.Curreny, a.Price, a.Status, a.CreatedAt, a.UpdatedAt, u.Email
+FROM Alerts a
+JOIN Users u ON a.UserID = u.UserID
+WHERE a.Status = 'created'
 `
 
 type GetAlertsRow struct {
@@ -105,6 +108,7 @@ type GetAlertsRow struct {
 	Status    string
 	Createdat time.Time
 	Updatedat time.Time
+	Email     string
 }
 
 func (q *Queries) GetAlerts(ctx context.Context) ([]GetAlertsRow, error) {
@@ -124,6 +128,7 @@ func (q *Queries) GetAlerts(ctx context.Context) ([]GetAlertsRow, error) {
 			&i.Status,
 			&i.Createdat,
 			&i.Updatedat,
+			&i.Email,
 		); err != nil {
 			return nil, err
 		}

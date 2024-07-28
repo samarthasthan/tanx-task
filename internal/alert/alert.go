@@ -3,6 +3,7 @@ package alertor
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"math"
 	"strconv"
@@ -11,6 +12,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/samarthasthan/tanx-task/internal/database"
 	"github.com/samarthasthan/tanx-task/internal/database/mysql/sqlc"
+	"github.com/samarthasthan/tanx-task/internal/models"
 	"github.com/samarthasthan/tanx-task/internal/rabbitmq"
 )
 
@@ -111,14 +113,28 @@ func (a *Alert) processAlerts(alerts []sqlc.GetAlertsRow, symbol, priceStr strin
 
 			// Check if the real price is within the tolerance range of the alert price
 			if math.Abs(price-alertPrice) <= toleranceAmount {
-				// Send an email notification
-				// a.sendEmail(alert.UserEmail, symbol, priceStr)
-				// log email
-				log.Println("Alert triggered for user:", alert.Userid, "Symbol:", symbol, "Price:", priceStr)
+				// Create a new Mail struct
+				mail := &models.Mail{
+					To:      alert.Email,
+					Subject: "Trigger Alert",
+					Body:    fmt.Sprintf("Alert triggered for %s at %s", alert.Curreny, alert.Price),
+				}
+
+				// struct to byte
+				data, err := json.Marshal(mail)
+				if err != nil {
+					log.Println(err.Error())
+				}
+
+				// Publish a message to the RabbitMQ
+				err = a.rabbitmq.Publish("tanx", "tanx", data)
+				if err != nil {
+					log.Println(err.Error())
+				}
 
 				// Update the alert status in MySQL
 				dbCtx := context.Background()
-				err := mysql.Queries.UpdateAlertStatus(dbCtx, sqlc.UpdateAlertStatusParams{
+				err = mysql.Queries.UpdateAlertStatus(dbCtx, sqlc.UpdateAlertStatusParams{
 					Alertid: alert.Alertid,
 					Status:  "triggered",
 				})

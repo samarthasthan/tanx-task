@@ -39,8 +39,6 @@ services:
       retries: 100
       start_period: 10s
 
-
-
 networks:
   tanx:
     driver: bridge

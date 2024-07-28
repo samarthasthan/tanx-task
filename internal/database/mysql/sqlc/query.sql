@@ -35,7 +35,9 @@ UPDATE Alerts SET Status = 'deleted' WHERE AlertID = ?;
 SELECT AlertID, UserID, Curreny, Price, Status, CreatedAt, UpdatedAt FROM Alerts WHERE UserID = ?;
 
 -- name: GetAlerts :many
-SELECT AlertID, UserID, Curreny, Price, Status, CreatedAt, UpdatedAt FROM Alerts WHERE Status = 'created';
-
+SELECT a.AlertID, a.UserID, a.Curreny, a.Price, a.Status, a.CreatedAt, a.UpdatedAt, u.Email
+FROM Alerts a
+JOIN Users u ON a.UserID = u.UserID
+WHERE a.Status = 'created';
 -- name: UpdateAlertStatus :exec
 UPDATE Alerts SET Status = ? WHERE AlertID = ?;
