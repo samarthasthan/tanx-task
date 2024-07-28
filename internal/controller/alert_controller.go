@@ -15,6 +15,7 @@ import (
 
 func (c *Controller) CreateAlert(ctx echo.Context, a *models.Alert) error {
 	mysql := c.mysql.(*database.MySQL)
+	redis := c.redis.(*database.Redis)
 	dbCtx := ctx.Request().Context()
 	userID := ctx.Get("id").(string)
 
@@ -27,6 +28,15 @@ func (c *Controller) CreateAlert(ctx echo.Context, a *models.Alert) error {
 
 	if err != nil {
 		return err
+	}
+
+	// Remove cached alerts from Redis
+	err = redis.Del(dbCtx, "alerts").Err()
+	if err != nil {
+		log.Printf("Error removing alerts cache from Redis: %v", err)
+		// Optionally, handle this error depending on your use case
+	} else {
+		log.Printf("Alert created successfully for user %s and cache invalidated", userID)
 	}
 
 	return nil
@@ -45,7 +55,7 @@ func (c *Controller) DeleteAlert(ctx echo.Context, a *models.DeleteAlert) error 
 	return nil
 }
 
-func (c *Controller) GetAllAlerts(ctx echo.Context) ([]sqlc.GetAlertsRow, error) {
+func (c *Controller) GetAlerts(ctx echo.Context) ([]sqlc.GetAlertsByUserRow, error) {
 	mysql := c.mysql.(*database.MySQL)
 	redis := c.redis.(*database.Redis)
 	dbCtx := ctx.Request().Context()
@@ -57,14 +67,13 @@ func (c *Controller) GetAllAlerts(ctx echo.Context) ([]sqlc.GetAlertsRow, error)
 	cachedAlerts, err := redis.Get(dbCtx, cacheKey).Result()
 	if err == nil && cachedAlerts != "" {
 		// If cache hit, unmarshal the cached data
-		log.Println("Cache hit")
-		var alerts []sqlc.GetAlertsRow
+		var alerts []sqlc.GetAlertsByUserRow
 		if err := json.Unmarshal([]byte(cachedAlerts), &alerts); err == nil {
 			return alerts, nil
 		}
 	}
 
-	alerts, err := mysql.Queries.GetAlerts(dbCtx, userID)
+	alerts, err := mysql.Queries.GetAlertsByUser(dbCtx, userID)
 	if err != nil {
 		return nil, err
 	}

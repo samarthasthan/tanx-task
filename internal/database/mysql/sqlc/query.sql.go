@@ -94,7 +94,7 @@ func (q *Queries) DeleteVerification(ctx context.Context, userid string) error {
 }
 
 const getAlerts = `-- name: GetAlerts :many
-SELECT AlertID, UserID, Curreny, Price, Status, CreatedAt, UpdatedAt FROM Alerts WHERE UserID = ?
+SELECT AlertID, UserID, Curreny, Price, Status, CreatedAt, UpdatedAt FROM Alerts WHERE Status = 'created'
 `
 
 type GetAlertsRow struct {
@@ -107,8 +107,8 @@ type GetAlertsRow struct {
 	Updatedat time.Time
 }
 
-func (q *Queries) GetAlerts(ctx context.Context, userid string) ([]GetAlertsRow, error) {
-	rows, err := q.db.QueryContext(ctx, getAlerts, userid)
+func (q *Queries) GetAlerts(ctx context.Context) ([]GetAlertsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAlerts)
 	if err != nil {
 		return nil, err
 	}
@@ -116,6 +116,51 @@ func (q *Queries) GetAlerts(ctx context.Context, userid string) ([]GetAlertsRow,
 	var items []GetAlertsRow
 	for rows.Next() {
 		var i GetAlertsRow
+		if err := rows.Scan(
+			&i.Alertid,
+			&i.Userid,
+			&i.Curreny,
+			&i.Price,
+			&i.Status,
+			&i.Createdat,
+			&i.Updatedat,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getAlertsByUser = `-- name: GetAlertsByUser :many
+SELECT AlertID, UserID, Curreny, Price, Status, CreatedAt, UpdatedAt FROM Alerts WHERE UserID = ?
+`
+
+type GetAlertsByUserRow struct {
+	Alertid   string
+	Userid    string
+	Curreny   string
+	Price     string
+	Status    string
+	Createdat time.Time
+	Updatedat time.Time
+}
+
+func (q *Queries) GetAlertsByUser(ctx context.Context, userid string) ([]GetAlertsByUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAlertsByUser, userid)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAlertsByUserRow
+	for rows.Next() {
+		var i GetAlertsByUserRow
 		if err := rows.Scan(
 			&i.Alertid,
 			&i.Userid,
@@ -197,6 +242,20 @@ func (q *Queries) GetUserIDByEmail(ctx context.Context, email string) (string, e
 	var userid string
 	err := row.Scan(&userid)
 	return userid, err
+}
+
+const updateAlertStatus = `-- name: UpdateAlertStatus :exec
+UPDATE Alerts SET Status = ? WHERE AlertID = ?
+`
+
+type UpdateAlertStatusParams struct {
+	Status  string
+	Alertid string
+}
+
+func (q *Queries) UpdateAlertStatus(ctx context.Context, arg UpdateAlertStatusParams) error {
+	_, err := q.db.ExecContext(ctx, updateAlertStatus, arg.Status, arg.Alertid)
+	return err
 }
 
 const verifyAccount = `-- name: VerifyAccount :exec

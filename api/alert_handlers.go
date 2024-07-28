@@ -45,7 +45,7 @@ func (h *Handlers) handleAlertDelete(c echo.Context) error {
 
 // AlertAll handles the alert all request
 func (h *Handlers) handleAlertAll(c echo.Context) error {
-	alerts, err := h.controller.GetAllAlerts(c)
+	alerts, err := h.controller.GetAlerts(c)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err)
 	}

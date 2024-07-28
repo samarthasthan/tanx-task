@@ -20,17 +20,6 @@ type Alert struct {
 	Deletedat sql.NullTime
 }
 
-type Reset struct {
-	Resetid   string
-	Userid    string
-	Otp       int32
-	Expiresat time.Time
-	Isused    sql.NullBool
-	Createdat time.Time
-	Updatedat time.Time
-	Deletedat sql.NullTime
-}
-
 type User struct {
 	Userid     string
 	Name       string

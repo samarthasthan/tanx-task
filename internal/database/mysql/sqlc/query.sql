@@ -31,5 +31,11 @@ INSERT INTO Alerts (AlertID, UserID, Curreny, Price) VALUES (?,?,?,?);
 -- name: DeleteAlert :exec
 UPDATE Alerts SET Status = 'deleted' WHERE AlertID = ?;
 
--- name: GetAlerts :many
+-- name: GetAlertsByUser :many
 SELECT AlertID, UserID, Curreny, Price, Status, CreatedAt, UpdatedAt FROM Alerts WHERE UserID = ?;
+
+-- name: GetAlerts :many
+SELECT AlertID, UserID, Curreny, Price, Status, CreatedAt, UpdatedAt FROM Alerts WHERE Status = 'created';
+
+-- name: UpdateAlertStatus :exec
+UPDATE Alerts SET Status = ? WHERE AlertID = ?;
