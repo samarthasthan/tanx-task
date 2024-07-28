@@ -59,9 +59,9 @@ func (h *Handlers) HandleAuth() {
 
 // HandleAlert handles the alert routes
 func (h *Handlers) HandleAlert() {
-	alert := h.Group("/alert")
+	alert := h.Group("/alerts")
 	alert.Use(h.validateToken) // Validate the token
 	alert.POST("/create", h.handleAlertCreate)
 	alert.POST("/delete", h.handleAlertDelete)
-	alert.GET("/all", h.handleAlertAll)
+	alert.GET("", h.handleAlertAll)
 }

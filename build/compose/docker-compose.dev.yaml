@@ -1,0 +1,46 @@
+services:
+
+  # Databases
+  mysql:
+    image: mysql:latest
+    container_name: mysql
+    hostname: mysql
+    networks:
+      - tanx
+    ports:
+      - "${MYSQL_PORT}:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=tanx
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    hostname: redis
+    networks:
+      - tanx
+    ports:
+      - "${REDIS_PORT}:6379"
+  
+
+  # Message Brokers
+  rabbitmq:
+    image: rabbitmq:latest
+    container_name: rabbitmq
+    hostname: rabbitmq
+    environment:
+       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - "${RABBITMQ_DEFAULT_PORT}:5672"
+    networks:
+      - tanx
+    healthcheck:
+        test: rabbitmq-diagnostics -q ping
+        interval: 30s
+        timeout: 10s
+        retries: 5
+
+networks:
+  tanx:
+    driver: bridge

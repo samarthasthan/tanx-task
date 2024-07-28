@@ -61,12 +61,8 @@ func main() {
 	defer conn.Close()
 	fmt.Println("Connected to WebSocket")
 
-	// Set read deadline and pong handler
-	conn.SetReadDeadline(time.Now().Add(60 * time.Second))
-	conn.SetPongHandler(func(string) error {
-		conn.SetReadDeadline(time.Now().Add(60 * time.Second))
-		return nil
-	})
+	conn.SetReadDeadline(time.Time{})
+
 	// Create a new instance of MySQL database
 	mysql := database.NewMySQL()
 	err = mysql.Connect(fmt.Sprintf("root:%s@tcp(%s:%s)/tanx?parseTime=true", MYSQL_ROOT_PASSWORD, MYSQL_HOST, MYSQL_PORT))

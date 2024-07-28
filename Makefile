@@ -39,8 +39,18 @@ migrate-up:
 # Delete migrations
 migrate-down:
 	@echo "Deleting migrations..."
-	@migrate -path ./internal/database/mysql/migrations -database "mysql://root:password@tcp(localhost:3306)/tanx" -verbose down
+	@migrate -path ./internal/database/mysql/migrations -database "mysql://root:${MYSQL_ROOT_PASSWORD}@tcp(${MYSQL_HOST}:${MYSQL_PORT})/tanx" -verbose down
 
+# Make migrations Devlopment environment
+migrate-up-dev:
+	@echo "Making migrations..."
+	@migrate -path ./internal/database/mysql/migrations -database "mysql://root:password@tcp(localhost:3306)/tanx" -verbose up
+	@echo "Migrations completed."
+
+# Delete migrations Devlopment environment
+migrate-down-dev:
+	@echo "Deleting migrations..."
+	@migrate -path ./internal/database/mysql/migrations -database "mysql://root:password@tcp(localhost:3306)/tanx" -verbose down
 
 # SQLC generate
 sqlc-gen:

@@ -10,7 +10,12 @@ Welcome to the Price Alert Application project! This application allows users to
 - **Messaging**: RabbitMQ
 - **Real-Time Data**: Binance WebSocket for real-time price updates
 - **Email Service**: Brevo Emails
+- **Reverse Proxy**: NGINX
 - **Containerization**: Docker and Docker Compose
+
+## Live URL
+
+You can access the live version of the Price Alert Application APIs at [https://task.samarthasthan.com](https://task.samarthasthan.com).
 
 ## Features
 
@@ -73,7 +78,7 @@ To get started with the project, follow these steps:
 4. **Start the services**:
 
    ```bash
-   docker-compose up -d
+   docker-compose -f ./build/compose/docker-compose.yaml up -d
    ```
 
    or use Makefile
@@ -82,16 +87,10 @@ To get started with the project, follow these steps:
    Make up
    ```
 
-5. **Migrate Database**;
-
-   ```bash
-   make migrate-up
-   ```
-
-6. **Access the API**:
+5. **Access the API**:
    - **Create Alert**: `POST /alerts/create/`
    - **Delete Alert**: `DELETE /alerts/delete/`
-   - **Fetch Alerts**: `GET /alerts/all`
+   - **Fetch Alerts**: `GET /alerts`
 
 ## API Endpoints
 
@@ -120,7 +119,7 @@ To get started with the project, follow these steps:
 
 ### Fetch Alerts
 
-- **Endpoint**: `GET /alerts/all`
+- **Endpoint**: `GET /alerts`
 - **Description**: Fetch all alerts
 
 ## Docker Configuration
@@ -128,13 +127,12 @@ To get started with the project, follow these steps:
 The project uses Docker Compose for containerization. Below is the `docker-compose.yml` configuration for the services:
 
 ```yaml
-version: "3.8"
-
 services:
   # Databases
   mysql:
     image: mysql:latest
     container_name: mysql
+    hostname: mysql
     networks:
       - tanx
     ports:
@@ -146,6 +144,7 @@ services:
   redis:
     image: redis:latest
     container_name: redis
+    hostname: redis
     networks:
       - tanx
     ports:
@@ -155,19 +154,19 @@ services:
   rabbitmq:
     image: rabbitmq:latest
     container_name: rabbitmq
+    hostname: rabbitmq
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
     ports:
-      - ${RABBITMQ_DEFAULT_PORT}:5672
+      - "${RABBITMQ_DEFAULT_PORT}:5672"
     networks:
       - tanx
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "ping"]
-      interval: 10s
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 30s
 
   # Services
   email:
@@ -175,6 +174,7 @@ services:
       context: ../../
       dockerfile: ./build/docker/email/Dockerfile
     container_name: email
+    hostname: email
     networks:
       - tanx
     environment:
@@ -191,33 +191,12 @@ services:
       rabbitmq:
         condition: service_healthy
 
-  alert:
-    build:
-      context: ../../
-      dockerfile: ./build/docker/alert/Dockerfile
-    container_name: alert
-    networks:
-      - tanx
-    environment:
-      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
-      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
-      - RABBITMQ_DEFAULT_PORT=${RABBITMQ_DEFAULT_PORT}
-      - RABBITMQ_DEFAULT_HOST=${RABBITMQ_DEFAULT_HOST}
-      - MYSQL_PORT=${MYSQL_PORT}
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-      - MYSQL_HOST=${MYSQL_HOST}
-      - REDIS_PORT=${REDIS_PORT}
-      - REDIS_HOST=${REDIS_HOST}
-    command: ["./app"]
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-
   tanx:
     build:
       context: ../../
       dockerfile: ./build/docker/tanx/Dockerfile
     container_name: tanx
+    hostname: tanx
     networks:
       - tanx
     environment:
@@ -234,6 +213,29 @@ services:
       - JWT_SECRET=${JWT_SECRET}
     ports:
       - "${REST_API_PORT}:${REST_API_PORT}"
+    command: ["sh", "-c", "make migrate-up && ./app"]
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  alert:
+    build:
+      context: ../../
+      dockerfile: ./build/docker/alert/Dockerfile
+    container_name: alert
+    hostname: alert
+    networks:
+      - tanx
+    environment:
+      - MYSQL_PORT=${MYSQL_PORT}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_HOST=${MYSQL_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_HOST=${REDIS_HOST}
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+      - RABBITMQ_DEFAULT_PORT=${RABBITMQ_DEFAULT_PORT}
+      - RABBITMQ_DEFAULT_HOST=${RABBITMQ_DEFAULT_HOST}
     command: ["./app"]
     depends_on:
       rabbitmq:

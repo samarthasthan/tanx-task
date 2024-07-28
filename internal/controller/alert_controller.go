@@ -66,7 +66,6 @@ func (c *Controller) GetAlerts(ctx echo.Context) ([]sqlc.GetAlertsByUserRow, err
 
 	cachedAlerts, err := redis.Get(dbCtx, cacheKey).Result()
 	if err == nil && cachedAlerts != "" {
-		log.Println("1")
 		// If cache hit, unmarshal the cached data
 		var alerts []sqlc.GetAlertsByUserRow
 		if err := json.Unmarshal([]byte(cachedAlerts), &alerts); err == nil {
@@ -76,20 +75,18 @@ func (c *Controller) GetAlerts(ctx echo.Context) ([]sqlc.GetAlertsByUserRow, err
 
 	alerts, err := mysql.Queries.GetAlertsByUser(dbCtx, userID)
 	if err != nil {
-		log.Println("2")
 		return nil, err
 	}
 
 	alertsJSON, err := json.Marshal(alerts)
 	if err != nil {
-		log.Println("3")
+
 		return nil, err
 	}
 
 	// Store the alerts in Redis cache with an expiration time
 	err = redis.Set(dbCtx, cacheKey, alertsJSON, 5*time.Minute).Err()
 	if err != nil {
-		log.Println("4")
 		return nil, err
 	}
 
