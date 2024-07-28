@@ -17,6 +17,8 @@ Welcome to the Price Alert Application project! This application allows users to
 
 You can access the live version of the Price Alert Application APIs at [https://task.samarthasthan.com](https://task.samarthasthan.com).
 
+**Note**: Please be aware that due to the server's location in London, you may experience some latency.
+
 ## Features
 
 - **Create Alert**: API endpoint to set price alerts.
@@ -42,6 +44,11 @@ Here are some screenshots:
 | Sign Up OTP Email                     | Trigger Email                               |
 | ------------------------------------- | ------------------------------------------- |
 | ![Sign Up OTP](/samples/IMG_0740.PNG) | ![Trigger Email](/samples/IMG_0742%202.PNG) |
+
+
+## Tolerance for Price Alerts
+
+To demonstrate the tolerance functionality, the application uses an absolute tolerance of 90 units. This means that if the real-time price of a cryptocurrency is within 90 units of the target price set in the alert, the alert will be triggered. For example, if an alert is set for a price of $50,000, the alert will trigger if the price is between $49,910 and $50,090.
 
 ## Getting Started
 
@@ -84,7 +91,7 @@ To get started with the project, follow these steps:
    or use Makefile
 
    ```bash
-   Make up
+   make up
    ```
 
 5. **Access the API**:
@@ -246,13 +253,24 @@ networks:
     driver: bridge
 ```
 
-### Solution for Sending Alerts
+## Solution for Sending Alerts
 
 The application uses the following approach for sending alerts:
 
 1. **Real-Time Price Updates**: Connects to Binance WebSocket for real-time price updates.
 2. **Triggering Alerts**: Compares current prices with user-set alert prices and triggers alerts when prices match.
 3. **Sending Emails**: Uses RabbitMQ for message brokering and an email service to send notification emails when an alert is triggered.
+
+## Possible Improvements
+
+While this application provides core functionalities, several enhancements could be considered for future development:
+
+- **Centralized Logging**: Implement centralized logging to monitor and debug issues more effectively.
+- **gRPC**: Integrate gRPC for efficient inter-service communication.
+- **Metrics and Monitoring**: Add metrics and monitoring for better visibility into system performance and health.
+- **Scalability Enhancements**: Consider architectural changes for improved scalability.
+
+Due to time constraints, these improvements have been skipped in the current implementation.
 
 ## Contact
 
