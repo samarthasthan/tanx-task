@@ -1,7 +1,10 @@
 package controller
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -44,11 +47,35 @@ func (c *Controller) DeleteAlert(ctx echo.Context, a *models.DeleteAlert) error 
 
 func (c *Controller) GetAllAlerts(ctx echo.Context) ([]sqlc.GetAlertsRow, error) {
 	mysql := c.mysql.(*database.MySQL)
+	redis := c.redis.(*database.Redis)
 	dbCtx := ctx.Request().Context()
 	userID := ctx.Get("id").(string)
 
-	alerts, err := mysql.Queries.GetAlerts(dbCtx, userID)
+	// Define the cache key
+	cacheKey := "alerts:" + userID
 
+	cachedAlerts, err := redis.Get(dbCtx, cacheKey).Result()
+	if err == nil && cachedAlerts != "" {
+		// If cache hit, unmarshal the cached data
+		log.Println("Cache hit")
+		var alerts []sqlc.GetAlertsRow
+		if err := json.Unmarshal([]byte(cachedAlerts), &alerts); err == nil {
+			return alerts, nil
+		}
+	}
+
+	alerts, err := mysql.Queries.GetAlerts(dbCtx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	alertsJSON, err := json.Marshal(alerts)
+	if err != nil {
+		return nil, err
+	}
+
+	// Store the alerts in Redis cache with an expiration time
+	err = redis.Set(dbCtx, cacheKey, alertsJSON, 5*time.Minute).Err()
 	if err != nil {
 		return nil, err
 	}
