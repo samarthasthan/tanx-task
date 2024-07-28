@@ -13,7 +13,7 @@ type Alert struct {
 	Alertid   string
 	Userid    string
 	Curreny   string
-	Rate      string
+	Price     string
 	Status    string
 	Createdat time.Time
 	Updatedat time.Time

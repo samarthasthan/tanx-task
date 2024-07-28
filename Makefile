@@ -1,7 +1,11 @@
 
-run:
+run-tanx:
 	@echo "Running the application"
-	@go run ./cmd/*
+	@go run ./cmd/tanx/main.go
+
+run-mail:
+	@echo "Running the application"
+	@go run ./cmd/email/main.go
 
 build:
 	@echo "Building the application"

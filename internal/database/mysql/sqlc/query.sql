@@ -24,3 +24,12 @@ SELECT Password FROM Users WHERE Email = ?;
 
 -- name: GetUserByEmail :one
 SELECT UserID, Name, Email, Password FROM Users WHERE Email = ?;
+
+-- name: CreateAlert :exec
+INSERT INTO Alerts (AlertID, UserID, Curreny, Price) VALUES (?,?,?,?);
+
+-- name: DeleteAlert :exec
+UPDATE Alerts SET Status = 'deleted' WHERE AlertID = ?;
+
+-- name: GetAlerts :many
+SELECT AlertID, UserID, Curreny, Price, Status, CreatedAt, UpdatedAt FROM Alerts WHERE UserID = ?;

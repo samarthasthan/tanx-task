@@ -42,6 +42,7 @@ func (h *Handlers) Handle() {
 	// Handle the authentication routes
 	h.RegisterValidator()
 	h.HandleAuth()
+	h.HandleAlert()
 }
 
 // HandleAuth handles the auth routes

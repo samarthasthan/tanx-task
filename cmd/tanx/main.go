@@ -7,9 +7,9 @@ import (
 	"github.com/samarthasthan/tanx-task/api"
 	"github.com/samarthasthan/tanx-task/internal/controller"
 	"github.com/samarthasthan/tanx-task/internal/database"
-	"github.com/samarthasthan/tanx-task/internal/mail"
 	"github.com/samarthasthan/tanx-task/internal/rabbitmq"
 	"github.com/samarthasthan/tanx-task/pkg/env"
+	rabbitmq_utils "github.com/samarthasthan/tanx-task/pkg/rabbitmq"
 )
 
 // Define the environment variables
@@ -59,27 +59,13 @@ func main() {
 	}
 
 	// We can use same instance of RabbitMQ for both publisher and consumer
-	// But for the sake of demonstration, we will create two instances
 	// As both publisher and consumer will be running in the different containers
 	// Create a new RabbitMQ instance for the publisher
 	publisher, err := rabbitmq.NewRabbitMQ(fmt.Sprintf("amqp://%s:%s@%s:%s/", RABBITMQ_DEFAULT_USER, RABBITMQ_DEFAULT_PASS, RABBITMQ_DEFAULT_HOST, RABBITMQ_DEFAULT_PORT))
 	if err != nil {
-		failOnError(err, "Failed to connect to RabbitMQ as publisher")
+		rabbitmq_utils.FailOnError(err, "Failed to connect to RabbitMQ as publisher")
 	}
 	defer publisher.Close()
-
-	// Create a new RabbitMQ instance for the consumer
-	consumer, err := rabbitmq.NewRabbitMQ(fmt.Sprintf("amqp://%s:%s@%s:%s/", RABBITMQ_DEFAULT_USER, RABBITMQ_DEFAULT_PASS, RABBITMQ_DEFAULT_HOST, RABBITMQ_DEFAULT_PORT))
-	if err != nil {
-		failOnError(err, "Failed to connect to RabbitMQ as consumer")
-	}
-	defer consumer.Close()
-
-	// Mail handler
-	m := mail.NewMailHandler(consumer, SMTP_SERVER, SMTP_PORT, SMTP_LOGIN, SMTP_PASSWORD)
-	go func() {
-		m.ConsumeMails()
-	}()
 
 	// Register controllers
 	c := controller.NewController(publisher, mysql, JWT_SECRET)
@@ -88,10 +74,4 @@ func main() {
 	h := api.NewHandler(c)
 	h.Handle()
 	h.Logger.Fatal(h.Start(":" + REST_API_PORT))
-}
-
-func failOnError(err error, msg string) {
-	if err != nil {
-		log.Panicf("%s: %s", msg, err)
-	}
 }

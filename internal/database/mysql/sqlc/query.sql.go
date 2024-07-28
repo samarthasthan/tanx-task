@@ -32,6 +32,27 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) er
 	return err
 }
 
+const createAlert = `-- name: CreateAlert :exec
+INSERT INTO Alerts (AlertID, UserID, Curreny, Price) VALUES (?,?,?,?)
+`
+
+type CreateAlertParams struct {
+	Alertid string
+	Userid  string
+	Curreny string
+	Price   string
+}
+
+func (q *Queries) CreateAlert(ctx context.Context, arg CreateAlertParams) error {
+	_, err := q.db.ExecContext(ctx, createAlert,
+		arg.Alertid,
+		arg.Userid,
+		arg.Curreny,
+		arg.Price,
+	)
+	return err
+}
+
 const createVerification = `-- name: CreateVerification :exec
 INSERT INTO Verifications (VerificationId, UserID, OTP, ExpiresAt)
 VALUES (?,?,?,?)
@@ -54,6 +75,15 @@ func (q *Queries) CreateVerification(ctx context.Context, arg CreateVerification
 	return err
 }
 
+const deleteAlert = `-- name: DeleteAlert :exec
+UPDATE Alerts SET Status = 'deleted' WHERE AlertID = ?
+`
+
+func (q *Queries) DeleteAlert(ctx context.Context, alertid string) error {
+	_, err := q.db.ExecContext(ctx, deleteAlert, alertid)
+	return err
+}
+
 const deleteVerification = `-- name: DeleteVerification :exec
 DELETE FROM Verifications WHERE UserID = ?
 `
@@ -61,6 +91,51 @@ DELETE FROM Verifications WHERE UserID = ?
 func (q *Queries) DeleteVerification(ctx context.Context, userid string) error {
 	_, err := q.db.ExecContext(ctx, deleteVerification, userid)
 	return err
+}
+
+const getAlerts = `-- name: GetAlerts :many
+SELECT AlertID, UserID, Curreny, Price, Status, CreatedAt, UpdatedAt FROM Alerts WHERE UserID = ?
+`
+
+type GetAlertsRow struct {
+	Alertid   string
+	Userid    string
+	Curreny   string
+	Price     string
+	Status    string
+	Createdat time.Time
+	Updatedat time.Time
+}
+
+func (q *Queries) GetAlerts(ctx context.Context, userid string) ([]GetAlertsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAlerts, userid)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAlertsRow
+	for rows.Next() {
+		var i GetAlertsRow
+		if err := rows.Scan(
+			&i.Alertid,
+			&i.Userid,
+			&i.Curreny,
+			&i.Price,
+			&i.Status,
+			&i.Createdat,
+			&i.Updatedat,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getOTP = `-- name: GetOTP :one
