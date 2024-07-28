@@ -39,5 +39,6 @@ SELECT a.AlertID, a.UserID, a.Curreny, a.Price, a.Status, a.CreatedAt, a.Updated
 FROM Alerts a
 JOIN Users u ON a.UserID = u.UserID
 WHERE a.Status = 'created';
+
 -- name: UpdateAlertStatus :exec
 UPDATE Alerts SET Status = ? WHERE AlertID = ?;

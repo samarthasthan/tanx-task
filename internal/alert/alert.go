@@ -101,7 +101,7 @@ func (a *Alert) processAlerts(alerts []sqlc.GetAlertsRow, symbol, priceStr strin
 	}
 
 	// Define an absolute tolerance value
-	const toleranceAmount = 100.0 // Absolute tolerance of 100 units
+	const toleranceAmount = 90.0 // Absolute tolerance of 100 units
 
 	for _, alert := range alerts {
 		if symbol == alert.Curreny {
